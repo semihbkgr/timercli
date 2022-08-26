@@ -1,1 +1,3 @@
-# timer-command
+# timer command
+
+`timer`
