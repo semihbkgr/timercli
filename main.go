@@ -1,12 +1,18 @@
 package main
 
 import (
-	"fmt"
+	"os"
 	"time"
 )
 
 func main() {
+
+	time.Sleep(time.Second)
+
+	r := newRenderer(os.Stdout)
+
 	for {
-		fmt.Print("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b" + strconv(time.Now().Unix()))
+		r.render(time.Now().Unix())
 	}
+
 }
