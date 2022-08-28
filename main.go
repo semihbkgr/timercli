@@ -12,7 +12,7 @@ func main() {
 	r := newRenderer(os.Stdout)
 
 	for {
-		r.render(time.Now().Unix())
+		r.render(time.Now().Format(time.RFC3339), "\n")
 	}
 
 }

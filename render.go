@@ -24,9 +24,9 @@ func (r *renderer) render(a ...any) {
 	if r.l > 0 {
 		b.WriteString(strings.Repeat("\b", r.l))
 	}
-	s := fmt.Sprint(a)
+	s := fmt.Sprint(a...)
 	r.l = len(s)
 	b.WriteString(s)
 	r.w.Write([]byte(b.String()))
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(time.Millisecond)
 }
