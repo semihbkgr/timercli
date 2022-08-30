@@ -1,3 +1,4 @@
 # timer command
 
-`timer`
+`timer` is a command to track elapsed time on console
+

@@ -6,13 +6,14 @@ import (
 )
 
 func main() {
+	startTimer()
+}
 
-	time.Sleep(time.Second)
-
+func startTimer() {
+	st := time.Now().UnixMilli()
 	r := newRenderer(os.Stdout)
-
 	for {
-		r.render(time.Now().Format(time.RFC3339), "\n")
+		r.render(time.Now().UnixMilli() - st)
+		time.Sleep(10 * time.Millisecond)
 	}
-
 }
