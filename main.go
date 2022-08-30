@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 )
@@ -13,7 +14,7 @@ func startTimer() {
 	st := time.Now().UnixMilli()
 	r := newRenderer(os.Stdout)
 	for {
-		r.render(time.Now().UnixMilli() - st)
-		time.Sleep(10 * time.Millisecond)
+		r.render(fmt.Sprintf("%s", time.Duration(time.Now().UnixMilli()-st)*time.Millisecond))
+		time.Sleep(100 * time.Millisecond)
 	}
 }
