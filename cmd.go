@@ -11,8 +11,9 @@ import (
 func main() {
 	d, err := parseDuration()
 	checkErr(err)
-	c := newCountdown(d)
-	c.wait()
+	c := NewCountdown(d)
+	r := c.Remaining()
+	consume(r)
 }
 
 func parseDuration() (time.Duration, error) {
@@ -39,4 +40,8 @@ func checkErr(err error) {
 		fmt.Fprintln(os.Stderr, err.Error())
 		os.Exit(1)
 	}
+}
+
+func consume[T any](c chan T, f func(T)) {
+
 }

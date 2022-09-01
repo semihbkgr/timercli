@@ -4,7 +4,7 @@ import "time"
 
 const defaultTickRate = 100 * time.Millisecond
 
-type countdown struct {
+type Countdown struct {
 	duration  time.Duration
 	tickRate  time.Duration
 	ticker    *time.Ticker
@@ -12,8 +12,8 @@ type countdown struct {
 	chans     []chan time.Duration
 }
 
-func newCountdown(d time.Duration) *countdown {
-	c := &countdown{
+func NewCountdown(d time.Duration) *Countdown {
+	c := &Countdown{
 		duration:  d,
 		tickRate:  defaultTickRate,
 		ticker:    time.NewTicker(defaultTickRate),
@@ -24,13 +24,13 @@ func newCountdown(d time.Duration) *countdown {
 	return c
 }
 
-func (c *countdown) remaining() chan<- time.Duration {
+func (c *Countdown) Remaining() chan<- time.Duration {
 	ch := make(chan time.Duration, 0)
 	c.chans = append(c.chans, ch)
 	return ch
 }
 
-func startCountdown(c *countdown) {
+func startCountdown(c *Countdown) {
 	for {
 		t, ok := <-c.ticker.C
 		if !ok {
