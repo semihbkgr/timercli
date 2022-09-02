@@ -24,7 +24,7 @@ func NewCountdown(d time.Duration) *Countdown {
 	return c
 }
 
-func (c *Countdown) Remaining() chan<- time.Duration {
+func (c *Countdown) Remaining() <-chan time.Duration {
 	ch := make(chan time.Duration, 0)
 	c.chans = append(c.chans, ch)
 	return ch
@@ -32,20 +32,20 @@ func (c *Countdown) Remaining() chan<- time.Duration {
 
 func startCountdown(c *Countdown) {
 	for {
-		t, ok := <-c.ticker.C
-		if !ok {
+		t := <-c.ticker.C
+		r := c.duration - time.Duration(t.UnixNano()-c.startTime.UnixNano())
+		if r < 0 {
+			r = 0
+		}
+		for _, ch := range c.chans {
+			ch <- r
+		}
+		if r == 0 {
+			c.ticker.Stop()
 			for _, ch := range c.chans {
 				close(ch)
 			}
 			return
-		}
-		r := c.duration - time.Duration(t.UnixNano()-c.startTime.UnixNano())
-		if r < 0 {
-			c.ticker.Stop()
-			continue
-		}
-		for _, ch := range c.chans {
-			ch <- r
 		}
 	}
 }

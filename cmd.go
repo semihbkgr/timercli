@@ -13,10 +13,15 @@ func main() {
 	checkErr(err)
 	c := NewCountdown(d)
 	r := c.Remaining()
-	consume(r)
+	consume(r, func(d time.Duration) {
+		fmt.Printf("/r%s", d)
+	})
 }
 
 func parseDuration() (time.Duration, error) {
+	if !flag.Parsed() {
+		flag.Parse()
+	}
 	args := flag.Args()
 	if len(args) == 0 {
 		return 0, errors.New("missing duration arg")
@@ -42,6 +47,8 @@ func checkErr(err error) {
 	}
 }
 
-func consume[T any](c chan T, f func(T)) {
-
+func consume[T any](c <-chan T, f func(T)) {
+	for d := range c {
+		f(d)
+	}
 }

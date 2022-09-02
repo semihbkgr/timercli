@@ -2,6 +2,8 @@
 
 pretty console timer
 
+start countdown:
+
 ```shell
-timer <duration>
+timer [duration]
 ```
