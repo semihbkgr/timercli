@@ -78,6 +78,13 @@ const (
      #
 ######
 `
+	space = `
+  
+  
+  
+  
+  
+`
 	column = `
 
 ##
@@ -100,6 +107,18 @@ func (t text) width() int {
 	return len((t)[0])
 }
 
+func (t text) height() int {
+	return len(t)
+}
+
+func (t text) iterate(f func(x, t int, b bool)) {
+	for y, line := range t {
+		for x, b := range line {
+			f(x, y, b)
+		}
+	}
+}
+
 var textChars = map[rune]text{
 	'0': stringToTextChar(zero),
 	'1': stringToTextChar(one),
@@ -111,6 +130,7 @@ var textChars = map[rune]text{
 	'7': stringToTextChar(seven),
 	'8': stringToTextChar(eight),
 	'9': stringToTextChar(nine),
+	' ': stringToTextChar(space),
 	':': stringToTextChar(column),
 	'x': stringToTextChar(cross),
 }
@@ -124,7 +144,8 @@ func stringToTextChar(s string) text {
 			width = l
 		}
 	}
-	for y, line := range lines {
+	for y := 0; y < textCharHeight; y++ {
+		line := lines[y+1]
 		array := make([]bool, width)
 		for x := 0; x < width; x++ {
 			array[x] = x < len(line) && line[x] == '#'
@@ -132,6 +153,22 @@ func stringToTextChar(s string) text {
 		matrix[y] = array
 	}
 	return matrix
+}
+
+func textChar(r rune) text {
+	t, ok := textChars[r]
+	if !ok {
+		return textChars['x']
+	}
+	return t
+}
+
+func convertToText(s string) text {
+	texts := make([]text, len(s))
+	for i, c := range s {
+		texts[i] = textChar(c)
+	}
+	return concatTexts(texts...)
 }
 
 func concatTexts(t ...text) text {
@@ -149,11 +186,12 @@ func concatTexts(t ...text) text {
 				x++
 			}
 		}
+		ct[y] = line
 	}
 	return ct
 }
 
-func startTermbox() {
+func initTermbox() {
 	checkErr(termbox.Init())
 }
 
@@ -167,11 +205,11 @@ type Theme struct {
 }
 
 var themes = map[string]Theme{
-	"light": Theme{
+	"light": {
 		bg: termbox.ColorWhite,
-		fg: termbox.ColorBlue,
+		fg: termbox.ColorBlack,
 	},
-	"dark": Theme{
+	"dark": {
 		bg: termbox.ColorBlack,
 		fg: termbox.ColorWhite,
 	},
@@ -192,5 +230,17 @@ func NewRenderer(theme string) *Renderer {
 }
 
 func (r *Renderer) Render(s string) {
-	termbox.Clear(r.t.bg, r.t.bg)
+	err := termbox.Clear(r.t.bg, r.t.bg)
+	checkErr(err)
+	w, h := termbox.Size()
+	t := convertToText(s)
+	tx := (w - t.width()) / 2
+	ty := (h - t.height()) / 2
+	t.iterate(func(x, y int, b bool) {
+		if b {
+			termbox.SetCell(tx+x, ty+y, ' ', r.t.fg, r.t.fg)
+		}
+	})
+	err = termbox.Flush()
+	checkErr(err)
 }

@@ -9,23 +9,27 @@ import (
 )
 
 //todo: stop operation
-//todo: print
 //todo: better format
 //todo: send os notification of possible
+//todo: handle os signals
 
 func main() {
+	initTermbox()
+	defer closeTermbox()
 	d, err := parseDuration()
 	checkErr(err)
 	if d != 0 { // start countdown
 		checkErr(validateDuration(d))
-		r := NewCountdown(d).Remaining()
-		consume(r, func(d time.Duration) {
-			fmt.Printf("\r%s", d)
+		c := NewCountdown(d)
+		//r := NewRenderer("light")
+		consume(c.Remaining(), func(d time.Duration) {
+			//todo: format duration
 		})
 	} else { // start chronometer
-		r := NewChronometer().Remaining()
-		consume(r, func(d time.Duration) {
-			fmt.Printf("\r%s", d)
+		c := NewChronometer()
+		//r := NewRenderer("light")
+		consume(c.Remaining(), func(d time.Duration) {
+			//todo: format duration
 		})
 	}
 }
