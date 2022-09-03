@@ -8,10 +8,13 @@ import (
 	"time"
 )
 
+var theme = flag.String("t", "", "theme")
+
 //todo: stop operation
 //todo: better format
 //todo: send os notification of possible
 //todo: handle os signals
+//todo: handle console size errors
 
 func main() {
 	initTermbox()
@@ -21,15 +24,15 @@ func main() {
 	if d != 0 { // start countdown
 		checkErr(validateDuration(d))
 		c := NewCountdown(d)
-		//r := NewRenderer("light")
+		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
-			//todo: format duration
+			r.Render(formatDuration(d))
 		})
 	} else { // start chronometer
 		c := NewChronometer()
-		//r := NewRenderer("light")
+		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
-			//todo: format duration
+			r.Render(formatDuration(d))
 		})
 	}
 }
@@ -63,4 +66,11 @@ func consume[T any](c <-chan T, f func(T)) {
 	for d := range c {
 		f(d)
 	}
+}
+
+func formatDuration(d time.Duration) string {
+	m := int(d.Minutes())
+	s := int(d.Seconds())
+	f := fmt.Sprintf("%02d : %02d", m, s)
+	return f
 }

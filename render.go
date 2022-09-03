@@ -79,18 +79,18 @@ const (
 ######
 `
 	space = `
-  
-  
-  
-  
-  
+..
+..
+..
+..
+..
 `
 	column = `
-
+..
 ##
-
+..
 ##
-
+..
 `
 	cross = `
 ##   ##
@@ -178,11 +178,15 @@ func concatTexts(t ...text) text {
 		width += c.width()
 	}
 	for y := 0; y < len(ct); y++ {
-		line := make([]bool, width)
+		line := make([]bool, width+len(t)-1)
 		x := 0
-		for _, c := range t {
+		for i, c := range t {
 			for _, b := range c[y] {
 				line[x] = b
+				x++
+			}
+			if i < len(t)-1 {
+				line[x] = false
 				x++
 			}
 		}
