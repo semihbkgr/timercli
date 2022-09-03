@@ -8,14 +8,26 @@ import (
 	"time"
 )
 
+//todo: stop operation
+//todo: print
+//todo: better format
+//todo: send os notification of possible
+
 func main() {
 	d, err := parseDuration()
 	checkErr(err)
-	c := NewCountdown(d)
-	r := c.Remaining()
-	consume(r, func(d time.Duration) {
-		fmt.Printf("/r%s", d)
-	})
+	if d != 0 { // start countdown
+		checkErr(validateDuration(d))
+		r := NewCountdown(d).Remaining()
+		consume(r, func(d time.Duration) {
+			fmt.Printf("\r%s", d)
+		})
+	} else { // start chronometer
+		r := NewChronometer().Remaining()
+		consume(r, func(d time.Duration) {
+			fmt.Printf("\r%s", d)
+		})
+	}
 }
 
 func parseDuration() (time.Duration, error) {
@@ -24,20 +36,16 @@ func parseDuration() (time.Duration, error) {
 	}
 	args := flag.Args()
 	if len(args) == 0 {
-		return 0, errors.New("missing duration arg")
+		return 0, nil
 	}
-	d, err := time.ParseDuration(args[0])
-	if err != nil {
-		return 0, err
-	}
-	return validateDuration(d)
+	return time.ParseDuration(args[0])
 }
 
-func validateDuration(d time.Duration) (time.Duration, error) {
+func validateDuration(d time.Duration) error {
 	if d < 0 {
-		return 0, errors.New("non-positive duration")
+		return errors.New("non-positive duration")
 	}
-	return d, nil
+	return nil
 }
 
 func checkErr(err error) {
