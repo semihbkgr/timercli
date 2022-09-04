@@ -4,8 +4,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/nsf/termbox-go"
 	"os"
-	"os/signal"
 	"time"
 )
 
@@ -14,6 +14,7 @@ var theme = flag.String("t", "", "theme")
 //todo: stop operation
 //todo: thread safety renderer
 //todo: stop and proceed signal
+//todo: refactor timers
 
 func main() {
 	initTermbox()
@@ -22,7 +23,7 @@ func main() {
 	if d != 0 { // start countdown
 		checkErr(validateDuration(d))
 		c := NewCountdown(d)
-		handleInterruptSignal(func() {
+		handleCtrlCInput(func() {
 			c.Stop()
 		})
 		r := NewRenderer(*theme)
@@ -31,7 +32,7 @@ func main() {
 		})
 	} else { // start chronometer
 		c := NewChronometer()
-		handleInterruptSignal(func() {
+		handleCtrlCInput(func() {
 			c.Stop()
 		})
 		r := NewRenderer(*theme)
@@ -80,12 +81,16 @@ func formatDuration(d time.Duration) string {
 	return f
 }
 
-func handleInterruptSignal(f func()) {
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+func handleCtrlCInput(f func()) {
 	go func() {
-		for _ = range c {
-			f()
+		termbox.SetInputMode(termbox.InputEsc)
+		for {
+			e := termbox.PollEvent()
+			switch e.Key {
+			case termbox.KeyCtrlC:
+				f()
+				return
+			}
 		}
 	}()
 }

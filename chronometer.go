@@ -44,8 +44,16 @@ func startChronometer(c *Chronometer) {
 			}
 		default:
 			if c.stop {
+				stopChronometer(c)
 				return
 			}
 		}
+	}
+}
+
+func stopChronometer(c *Chronometer) {
+	c.ticker.Stop()
+	for _, ch := range c.chans {
+		close(ch)
 	}
 }

@@ -37,7 +37,6 @@ func (c *Countdown) Stop() {
 }
 
 func startCountdown(c *Countdown) {
-
 	for {
 		select {
 		case t := <-c.ticker.C:
@@ -49,16 +48,21 @@ func startCountdown(c *Countdown) {
 				ch <- r
 			}
 			if r == 0 {
-				c.ticker.Stop()
-				for _, ch := range c.chans {
-					close(ch)
-				}
+				stopCountdown(c)
 				return
 			}
 		default:
 			if c.stop {
+				stopCountdown(c)
 				return
 			}
 		}
+	}
+}
+
+func stopCountdown(c *Countdown) {
+	c.ticker.Stop()
+	for _, ch := range c.chans {
+		close(ch)
 	}
 }

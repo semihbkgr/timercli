@@ -197,7 +197,6 @@ func concatTexts(t ...text) text {
 
 func initTermbox() {
 	checkErr(termbox.Init())
-	termbox.SetInputMode(termbox.InputEsc)
 }
 
 func closeTermbox() {
