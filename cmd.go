@@ -5,36 +5,41 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"time"
 )
 
 var theme = flag.String("t", "", "theme")
 
 //todo: stop operation
-//todo: better format
-//todo: send os notification of possible
-//todo: handle os signals
-//todo: handle console size errors
+//todo: thread safety renderer
+//todo: stop and proceed signal
 
 func main() {
 	initTermbox()
-	defer closeTermbox()
 	d, err := parseDuration()
 	checkErr(err)
 	if d != 0 { // start countdown
 		checkErr(validateDuration(d))
 		c := NewCountdown(d)
+		handleInterruptSignal(func() {
+			c.Stop()
+		})
 		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
 			r.Render(formatDuration(d))
 		})
 	} else { // start chronometer
 		c := NewChronometer()
+		handleInterruptSignal(func() {
+			c.Stop()
+		})
 		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
 			r.Render(formatDuration(d))
 		})
 	}
+	closeTermbox()
 }
 
 func parseDuration() (time.Duration, error) {
@@ -73,4 +78,14 @@ func formatDuration(d time.Duration) string {
 	s := int(d.Seconds())
 	f := fmt.Sprintf("%02d : %02d", m, s)
 	return f
+}
+
+func handleInterruptSignal(f func()) {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for _ = range c {
+			f()
+		}
+	}()
 }

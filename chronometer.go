@@ -7,6 +7,7 @@ type Chronometer struct {
 	ticker    *time.Ticker
 	startTime time.Time
 	chans     []chan time.Duration
+	stop      bool
 }
 
 func NewChronometer() *Chronometer {
@@ -15,6 +16,7 @@ func NewChronometer() *Chronometer {
 		ticker:    time.NewTicker(defaultTickRate),
 		startTime: time.Now(),
 		chans:     make([]chan time.Duration, 0),
+		stop:      false,
 	}
 	go startChronometer(c)
 	return c
@@ -26,12 +28,24 @@ func (c *Chronometer) Remaining() <-chan time.Duration {
 	return ch
 }
 
+func (c *Chronometer) Stop() {
+	c.stop = true
+}
+
 func startChronometer(c *Chronometer) {
 	for {
-		t := <-c.ticker.C
-		r := time.Duration(t.UnixNano() - c.startTime.UnixNano())
-		for _, ch := range c.chans {
-			ch <- r
+		select {
+		case t := <-c.ticker.C:
+			r := time.Duration(t.UnixNano() - c.startTime.UnixNano())
+			for _, ch := range c.chans {
+				select {
+				case ch <- r:
+				}
+			}
+		default:
+			if c.stop {
+				return
+			}
 		}
 	}
 }
