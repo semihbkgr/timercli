@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/nsf/termbox-go"
 	"strings"
+	"sync"
 )
 
 const textCharHeight = 5
@@ -220,6 +221,7 @@ var themes = map[string]Theme{
 }
 
 type Renderer struct {
+	m *sync.Mutex
 	t Theme
 }
 
@@ -229,13 +231,18 @@ func NewRenderer(theme string) *Renderer {
 		t = themes["light"]
 	}
 	return &Renderer{
+		m: &sync.Mutex{},
 		t: t,
 	}
 }
 
-func (r *Renderer) Render(s string) {
+func (r *Renderer) Render(s string) error {
+	r.m.Lock()
+	defer r.m.Unlock()
 	err := termbox.Clear(r.t.bg, r.t.bg)
-	checkErr(err)
+	if err != nil {
+		return err
+	}
 	w, h := termbox.Size()
 	t := convertToText(s)
 	tx := (w - t.width()) / 2
@@ -245,6 +252,5 @@ func (r *Renderer) Render(s string) {
 			termbox.SetCell(tx+x, ty+y, ' ', r.t.fg, r.t.fg)
 		}
 	})
-	err = termbox.Flush()
-	checkErr(err)
+	return termbox.Flush()
 }

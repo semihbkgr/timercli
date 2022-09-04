@@ -11,11 +11,10 @@ import (
 
 var theme = flag.String("t", "", "theme")
 
-//todo: stop operation
-//todo: thread safety renderer
+//todo: rename stop to interrupt
 //todo: stop and proceed signal
-//todo: refactor timers
-
+//todo: refactor timers to single struct
+//todo: print elapsed time at the end
 func main() {
 	initTermbox()
 	d, err := parseDuration()
@@ -28,7 +27,8 @@ func main() {
 		})
 		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
-			r.Render(formatDuration(d))
+			err := r.Render(formatDuration(d))
+			checkErr(err)
 		})
 	} else { // start chronometer
 		c := NewChronometer()
@@ -37,7 +37,8 @@ func main() {
 		})
 		r := NewRenderer(*theme)
 		consume(c.Remaining(), func(d time.Duration) {
-			r.Render(formatDuration(d))
+			err := r.Render(formatDuration(d))
+			checkErr(err)
 		})
 	}
 	closeTermbox()
