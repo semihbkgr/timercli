@@ -16,35 +16,30 @@ var flagParseError = false
 var theme = commandLine.String("t", "light", "theme of the renderer on the console")
 
 //todo: interrupted and proceed signal
-//todo: refactor timers to single struct
 //todo: print elapsed time at the end
+//todo: error when duration is 0
+//todo: rename channels func and consider to change the chan logic
 func main() {
 	defer handleError()
 	initTermbox()
 	defer closeTermbox()
 	d, err := parseDuration()
 	checkErr(err)
-	if d != 0 { // start countdown
+	var t Timer
+	if d != 0 {
 		checkErr(validateDuration(d))
-		c := NewCountdown(d)
-		handleCtrlCInput(func() {
-			c.Interrupt()
-		})
-		r := NewRenderer(*theme)
-		consumeChan(c.Remaining(), func(d time.Duration) {
-			err := r.Render(formatDuration(d))
-			checkErr(err)
-		})
-	} else { // start chronometer
-		c := NewChronometer()
-		handleCtrlCInput(func() {
-			c.Interrupt()
-		})
-		r := NewRenderer(*theme)
-		consumeChan(c.Remaining(), func(d time.Duration) {
-			err := r.Render(formatDuration(d))
-			checkErr(err)
-		})
+		t = NewCountdown(d)
+	} else {
+		t = NewChronometer()
+	}
+	handleCtrlCInput(func() {
+		t.Interrupt()
+	})
+	r := NewRenderer(*theme)
+	c := t.Remaining()
+	for d := range c {
+		err := r.Render(formatDuration(d))
+		checkErr(err)
 	}
 }
 
@@ -100,12 +95,6 @@ func handleError() {
 				panic(err)
 			}
 		}
-	}
-}
-
-func consumeChan[T any](c <-chan T, f func(T)) {
-	for d := range c {
-		f(d)
 	}
 }
 
