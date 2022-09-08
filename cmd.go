@@ -9,14 +9,13 @@ import (
 	"time"
 )
 
-var commandLine = flag.NewFlagSet("console", flag.ContinueOnError)
-var isFlagParseError = false
+var commandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+var flagParseError = false
 
 // flags
 var theme = commandLine.String("t", "light", "theme of the renderer on the console")
 
-//todo: rename stop to interrupt
-//todo: stop and proceed signal
+//todo: interrupted and proceed signal
 //todo: refactor timers to single struct
 //todo: print elapsed time at the end
 func main() {
@@ -29,7 +28,7 @@ func main() {
 		checkErr(validateDuration(d))
 		c := NewCountdown(d)
 		handleCtrlCInput(func() {
-			c.Stop()
+			c.Interrupt()
 		})
 		r := NewRenderer(*theme)
 		consumeChan(c.Remaining(), func(d time.Duration) {
@@ -39,7 +38,7 @@ func main() {
 	} else { // start chronometer
 		c := NewChronometer()
 		handleCtrlCInput(func() {
-			c.Stop()
+			c.Interrupt()
 		})
 		r := NewRenderer(*theme)
 		consumeChan(c.Remaining(), func(d time.Duration) {
@@ -53,7 +52,7 @@ func commandLineArgs() []string {
 	if !commandLine.Parsed() {
 		err := commandLine.Parse(os.Args[1:])
 		if err != nil {
-			isFlagParseError = true
+			flagParseError = true
 			panic(err)
 		}
 	}
@@ -81,27 +80,26 @@ func checkErr(err error) {
 	}
 }
 
-func printAndExit(msg any, status int, after func()) {
-	f := os.Stdout
-	if status != 0 {
-		f = os.Stderr
-	}
-	_, err := fmt.Fprintln(f, msg)
-	if err != nil {
-		panic(err)
-	}
-	after()
-	os.Exit(status)
-}
-
 func handleError() {
 	r := recover()
 	if r != nil {
-		printAndExit(r, 1, func() {
-			if isFlagParseError {
-				commandLine.PrintDefaults()
+		switch t := r.(type) {
+		case error:
+			if flagParseError {
+				commandLine.Usage()
 			}
-		})
+			if t != flag.ErrHelp {
+				_, err := fmt.Fprintln(os.Stderr, t.Error())
+				if err != nil {
+					panic(err)
+				}
+			}
+		default:
+			_, err := fmt.Fprintln(os.Stderr, t)
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }
 

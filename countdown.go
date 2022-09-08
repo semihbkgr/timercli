@@ -5,22 +5,22 @@ import "time"
 const defaultTickRate = 100 * time.Millisecond
 
 type Countdown struct {
-	duration  time.Duration
-	tickRate  time.Duration
-	ticker    *time.Ticker
-	startTime time.Time
-	chans     []chan time.Duration
-	stop      bool
+	duration    time.Duration
+	tickRate    time.Duration
+	ticker      *time.Ticker
+	startTime   time.Time
+	channels    []chan time.Duration
+	interrupted bool
 }
 
 func NewCountdown(d time.Duration) *Countdown {
 	c := &Countdown{
-		duration:  d,
-		tickRate:  defaultTickRate,
-		ticker:    time.NewTicker(defaultTickRate),
-		startTime: time.Now(),
-		chans:     make([]chan time.Duration, 0),
-		stop:      false,
+		duration:    d,
+		tickRate:    defaultTickRate,
+		ticker:      time.NewTicker(defaultTickRate),
+		startTime:   time.Now(),
+		channels:    make([]chan time.Duration, 0),
+		interrupted: false,
 	}
 	go startCountdown(c)
 	return c
@@ -28,12 +28,12 @@ func NewCountdown(d time.Duration) *Countdown {
 
 func (c *Countdown) Remaining() <-chan time.Duration {
 	ch := make(chan time.Duration, 0)
-	c.chans = append(c.chans, ch)
+	c.channels = append(c.channels, ch)
 	return ch
 }
 
-func (c *Countdown) Stop() {
-	c.stop = true
+func (c *Countdown) Interrupt() {
+	c.interrupted = true
 }
 
 func startCountdown(c *Countdown) {
@@ -44,25 +44,25 @@ func startCountdown(c *Countdown) {
 			if r < 0 {
 				r = 0
 			}
-			for _, ch := range c.chans {
+			for _, ch := range c.channels {
 				ch <- r
 			}
 			if r == 0 {
-				stopCountdown(c)
+				interruptCountdown(c)
 				return
 			}
 		default:
-			if c.stop {
-				stopCountdown(c)
+			if c.interrupted {
+				interruptCountdown(c)
 				return
 			}
 		}
 	}
 }
 
-func stopCountdown(c *Countdown) {
+func interruptCountdown(c *Countdown) {
 	c.ticker.Stop()
-	for _, ch := range c.chans {
+	for _, ch := range c.channels {
 		close(ch)
 	}
 }
