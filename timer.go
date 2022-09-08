@@ -14,7 +14,7 @@ type Countdown struct {
 	tickRate    time.Duration
 	ticker      *time.Ticker
 	startTime   time.Time
-	channels    []chan time.Duration
+	remaining   chan time.Duration
 	interrupted bool
 }
 
@@ -24,7 +24,7 @@ func NewCountdown(d time.Duration) *Countdown {
 		tickRate:    defaultTickRate,
 		ticker:      time.NewTicker(defaultTickRate),
 		startTime:   time.Now(),
-		channels:    make([]chan time.Duration, 0),
+		remaining:   make(chan time.Duration),
 		interrupted: false,
 	}
 	go startCountdown(c)
@@ -32,9 +32,7 @@ func NewCountdown(d time.Duration) *Countdown {
 }
 
 func (c *Countdown) Remaining() <-chan time.Duration {
-	ch := make(chan time.Duration, 0)
-	c.channels = append(c.channels, ch)
-	return ch
+	return c.remaining
 }
 
 func (c *Countdown) Interrupt() {
@@ -49,11 +47,10 @@ func startCountdown(c *Countdown) {
 			if r < 0 {
 				r = 0
 			}
-			for _, ch := range c.channels {
-				select {
-				case ch <- r:
-				default:
-				}
+			select {
+			case c.remaining <- r:
+			case <-c.remaining:
+				c.remaining <- r
 			}
 			if r == 0 {
 				interruptCountdown(c)
@@ -69,17 +66,15 @@ func startCountdown(c *Countdown) {
 }
 
 func interruptCountdown(c *Countdown) {
+	close(c.remaining)
 	c.ticker.Stop()
-	for _, ch := range c.channels {
-		close(ch)
-	}
 }
 
 type Chronometer struct {
 	tickRate    time.Duration
 	ticker      *time.Ticker
 	startTime   time.Time
-	channels    []chan time.Duration
+	remaining   chan time.Duration
 	interrupted bool
 }
 
@@ -88,7 +83,7 @@ func NewChronometer() *Chronometer {
 		tickRate:    defaultTickRate,
 		ticker:      time.NewTicker(defaultTickRate),
 		startTime:   time.Now(),
-		channels:    make([]chan time.Duration, 0),
+		remaining:   make(chan time.Duration),
 		interrupted: false,
 	}
 	go startChronometer(c)
@@ -96,9 +91,7 @@ func NewChronometer() *Chronometer {
 }
 
 func (c *Chronometer) Remaining() <-chan time.Duration {
-	ch := make(chan time.Duration, 0)
-	c.channels = append(c.channels, ch)
-	return ch
+	return c.remaining
 }
 
 func (c *Chronometer) Interrupt() {
@@ -110,11 +103,10 @@ func startChronometer(c *Chronometer) {
 		select {
 		case t := <-c.ticker.C:
 			r := time.Duration(t.UnixNano() - c.startTime.UnixNano())
-			for _, ch := range c.channels {
-				select {
-				case ch <- r:
-				default:
-				}
+			select {
+			case c.remaining <- r:
+			case <-c.remaining:
+				c.remaining <- r
 			}
 		default:
 			if c.interrupted {
@@ -126,8 +118,6 @@ func startChronometer(c *Chronometer) {
 }
 
 func interruptChronometer(c *Chronometer) {
+	close(c.remaining)
 	c.ticker.Stop()
-	for _, ch := range c.channels {
-		close(ch)
-	}
 }

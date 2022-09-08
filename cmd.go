@@ -18,7 +18,6 @@ var theme = commandLine.String("t", "light", "theme of the renderer on the conso
 //todo: interrupted and proceed signal
 //todo: print elapsed time at the end
 //todo: error when duration is 0
-//todo: rename channels func and consider to change the chan logic
 func main() {
 	defer handleError()
 	initTermbox()
