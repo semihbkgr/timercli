@@ -9,14 +9,20 @@ import (
 	"time"
 )
 
-var theme = flag.String("t", "", "theme")
+var commandLine = flag.NewFlagSet("console", flag.ContinueOnError)
+var isFlagParseError = false
+
+// flags
+var theme = commandLine.String("t", "light", "theme of the renderer on the console")
 
 //todo: rename stop to interrupt
 //todo: stop and proceed signal
 //todo: refactor timers to single struct
 //todo: print elapsed time at the end
 func main() {
+	defer handleError()
 	initTermbox()
+	defer closeTermbox()
 	d, err := parseDuration()
 	checkErr(err)
 	if d != 0 { // start countdown
@@ -26,7 +32,7 @@ func main() {
 			c.Stop()
 		})
 		r := NewRenderer(*theme)
-		consume(c.Remaining(), func(d time.Duration) {
+		consumeChan(c.Remaining(), func(d time.Duration) {
 			err := r.Render(formatDuration(d))
 			checkErr(err)
 		})
@@ -36,19 +42,26 @@ func main() {
 			c.Stop()
 		})
 		r := NewRenderer(*theme)
-		consume(c.Remaining(), func(d time.Duration) {
+		consumeChan(c.Remaining(), func(d time.Duration) {
 			err := r.Render(formatDuration(d))
 			checkErr(err)
 		})
 	}
-	closeTermbox()
+}
+
+func commandLineArgs() []string {
+	if !commandLine.Parsed() {
+		err := commandLine.Parse(os.Args[1:])
+		if err != nil {
+			isFlagParseError = true
+			panic(err)
+		}
+	}
+	return commandLine.Args()
 }
 
 func parseDuration() (time.Duration, error) {
-	if !flag.Parsed() {
-		flag.Parse()
-	}
-	args := flag.Args()
+	args := commandLineArgs()
 	if len(args) == 0 {
 		return 0, nil
 	}
@@ -64,12 +77,35 @@ func validateDuration(d time.Duration) error {
 
 func checkErr(err error) {
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		os.Exit(1)
+		panic(err)
 	}
 }
 
-func consume[T any](c <-chan T, f func(T)) {
+func printAndExit(msg any, status int, after func()) {
+	f := os.Stdout
+	if status != 0 {
+		f = os.Stderr
+	}
+	_, err := fmt.Fprintln(f, msg)
+	if err != nil {
+		panic(err)
+	}
+	after()
+	os.Exit(status)
+}
+
+func handleError() {
+	r := recover()
+	if r != nil {
+		printAndExit(r, 1, func() {
+			if isFlagParseError {
+				commandLine.PrintDefaults()
+			}
+		})
+	}
+}
+
+func consumeChan[T any](c <-chan T, f func(T)) {
 	for d := range c {
 		f(d)
 	}
