@@ -12,15 +12,12 @@ import (
 var commandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 var flagParseError = false
 
-// flags
 var theme = commandLine.String("t", "light", "theme of the renderer on the console")
 
-//todo: interrupted and proceed signal
-//todo: print elapsed time at the end
+//todo: stop and proceed operations and manage them by os signals
+//todo: duration format options
 func main() {
 	defer handleError()
-	initTermbox()
-	defer closeTermbox()
 	d, ok := parseDuration()
 	var t Timer
 	if ok {
@@ -28,12 +25,14 @@ func main() {
 	} else {
 		t = NewChronometer()
 	}
+	defer printElapsedTime(t)
+	initTermbox()
+	defer closeTermbox()
 	handleCtrlCInput(func() {
 		t.Interrupt()
 	})
 	r := NewRenderer(*theme)
-	c := t.Remaining()
-	for d := range c {
+	for d := range t.Ticks() {
 		err := r.Render(formatDuration(d))
 		checkErr(err)
 	}
@@ -105,6 +104,10 @@ func formatDuration(d time.Duration) string {
 	s := int(d.Seconds())
 	f := fmt.Sprintf("%02d : %02d", m, s)
 	return f
+}
+
+func printElapsedTime(t Timer) {
+	fmt.Printf("Elapsed time: %s\n", formatDuration(t.Elapsed()))
 }
 
 func handleCtrlCInput(f func()) {

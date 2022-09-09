@@ -3,7 +3,8 @@ package main
 import "time"
 
 type Timer interface {
-	Remaining() <-chan time.Duration
+	Ticks() <-chan time.Duration
+	Elapsed() time.Duration
 	Interrupt()
 }
 
@@ -31,8 +32,12 @@ func NewCountdown(d time.Duration) *Countdown {
 	return c
 }
 
-func (c *Countdown) Remaining() <-chan time.Duration {
+func (c *Countdown) Ticks() <-chan time.Duration {
 	return c.remaining
+}
+
+func (c *Countdown) Elapsed() time.Duration {
+	return time.Duration(time.Now().UnixNano() - c.startTime.UnixNano())
 }
 
 func (c *Countdown) Interrupt() {
@@ -90,8 +95,12 @@ func NewChronometer() *Chronometer {
 	return c
 }
 
-func (c *Chronometer) Remaining() <-chan time.Duration {
+func (c *Chronometer) Ticks() <-chan time.Duration {
 	return c.remaining
+}
+
+func (c *Chronometer) Elapsed() time.Duration {
+	return time.Duration(time.Now().UnixNano() - c.startTime.UnixNano())
 }
 
 func (c *Chronometer) Interrupt() {
