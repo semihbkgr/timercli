@@ -23,7 +23,7 @@ func main() {
 	if ok {
 		t = NewCountdown(d)
 	} else {
-		t = NewChronometer()
+		t = NewStopwatch()
 	}
 	defer printElapsedTime(t)
 	initTermbox()

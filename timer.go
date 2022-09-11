@@ -75,7 +75,7 @@ func interruptCountdown(c *Countdown) {
 	c.ticker.Stop()
 }
 
-type Chronometer struct {
+type Stopwatch struct {
 	tickRate    time.Duration
 	ticker      *time.Ticker
 	startTime   time.Time
@@ -83,50 +83,50 @@ type Chronometer struct {
 	interrupted bool
 }
 
-func NewChronometer() *Chronometer {
-	c := &Chronometer{
+func NewStopwatch() *Stopwatch {
+	s := &Stopwatch{
 		tickRate:    defaultTickRate,
 		ticker:      time.NewTicker(defaultTickRate),
 		startTime:   time.Now(),
 		remaining:   make(chan time.Duration),
 		interrupted: false,
 	}
-	go startChronometer(c)
-	return c
+	go startStopwatch(s)
+	return s
 }
 
-func (c *Chronometer) Ticks() <-chan time.Duration {
+func (c *Stopwatch) Ticks() <-chan time.Duration {
 	return c.remaining
 }
 
-func (c *Chronometer) Elapsed() time.Duration {
+func (c *Stopwatch) Elapsed() time.Duration {
 	return time.Duration(time.Now().UnixNano() - c.startTime.UnixNano())
 }
 
-func (c *Chronometer) Interrupt() {
+func (c *Stopwatch) Interrupt() {
 	c.interrupted = true
 }
 
-func startChronometer(c *Chronometer) {
+func startStopwatch(s *Stopwatch) {
 	for {
 		select {
-		case t := <-c.ticker.C:
-			r := time.Duration(t.UnixNano() - c.startTime.UnixNano())
+		case t := <-s.ticker.C:
+			r := time.Duration(t.UnixNano() - s.startTime.UnixNano())
 			select {
-			case c.remaining <- r:
-			case <-c.remaining:
-				c.remaining <- r
+			case s.remaining <- r:
+			case <-s.remaining:
+				s.remaining <- r
 			}
 		default:
-			if c.interrupted {
-				interruptChronometer(c)
+			if s.interrupted {
+				interruptStopwatch(s)
 				return
 			}
 		}
 	}
 }
 
-func interruptChronometer(c *Chronometer) {
-	close(c.remaining)
-	c.ticker.Stop()
+func interruptStopwatch(s *Stopwatch) {
+	close(s.remaining)
+	s.ticker.Stop()
 }
