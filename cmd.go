@@ -38,19 +38,22 @@ func main() {
 	}
 }
 
-func commandLineArgs() []string {
+func commandLineArgs() ([]string, error) {
 	if !commandLine.Parsed() {
 		err := commandLine.Parse(os.Args[1:])
 		if err != nil {
-			flagParseError = true
-			panic(err)
+			flagParseError = err != flag.ErrHelp
+			return nil, err
 		}
 	}
-	return commandLine.Args()
+	return commandLine.Args(), nil
 }
 
 func parseDuration() (time.Duration, bool) {
-	args := commandLineArgs()
+	args, err := commandLineArgs()
+	if err != nil {
+		panic(err)
+	}
 	if l := len(args); l == 0 {
 		return 0, false
 	} else if l > 1 {
@@ -78,15 +81,12 @@ func handleError() {
 	if r != nil {
 		switch t := r.(type) {
 		case error:
-			if t != flag.ErrHelp {
+			if !flagParseError && t != flag.ErrHelp {
 				_, err := fmt.Fprintln(os.Stderr, t.Error())
 				if err != nil {
 					panic(err)
 				}
 				status = 1
-			}
-			if flagParseError {
-				commandLine.Usage()
 			}
 		default:
 			_, err := fmt.Fprintln(os.Stderr, t)
@@ -101,7 +101,7 @@ func handleError() {
 
 func formatDuration(d time.Duration) string {
 	m := int(d.Minutes())
-	s := int(d.Seconds())
+	s := int(d.Seconds()) % 60
 	f := fmt.Sprintf("%02d : %02d", m, s)
 	return f
 }
