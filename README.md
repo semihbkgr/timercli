@@ -1,6 +1,6 @@
 # Timer CLI
 
-Console timer written in Go
+Console timer app written in Go
 
 start countdown:
 
@@ -8,7 +8,7 @@ start countdown:
 timer [duration]
 ```
 
-start chronometer
+start stopwatch:
 
 ```shell
 timer
@@ -19,3 +19,12 @@ to list available options:
 ```shell
 timer -h
 ```
+```
+Usage of timer:
+  -t string
+    	theme of the renderer on the console (default "light")
+```
+
+
+
+![console](./console.png)
