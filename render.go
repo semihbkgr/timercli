@@ -7,98 +7,99 @@ import (
 )
 
 const textCharHeight = 5
+const textPixelRune = '#'
 
 const (
 	zero = `
-######
-#    #
-#    #
-#    #
-######
+.######.
+.#    #.
+.#    #.
+.#    #.
+.######.
 `
 	one = `
-     #
-     #
-     #
-     #
-     #
+.    # .
+.    # .
+.    # .
+.    # .
+.    # .
 `
 	two = `
-######
-     #
-######
-#
-######
+.######.
+.     #.
+.######.
+.#     .
+.######.
 `
 	three = `
-######
-     #
-   ###
-     #
-######
+.######.
+.     #.
+.   ###.
+.     #.
+.######.
 `
 	four = `
-#
-#
-#   #
-######
-    #
+.#     .
+.#     .
+.#   # .
+.######.
+.    # .
 `
 	five = `
-######
-#
-######
-     #
-######
+.######.
+.#     .
+.######.
+.     #.
+.######.
 `
 	six = `
-######
-#
-######
-#    #
-######
+.######.
+.#     .
+.######.
+.#    #.
+.######.
 `
 	seven = `
-######
-     #
-     #
-     #
-     #
+.######.
+.     #.
+.     #.
+.     #.
+.     #.
 `
 	eight = `
-######
-#    #
-######
-#    #
-######
+.######.
+.#    #.
+.######.
+.#    #.
+.######.
 `
 	nine = `
-######
-#    #
-######
-     #
-######
+.######.
+.#    #.
+.######.
+.     #.
+.######.
 `
 	space = `
-..
-..
-..
-..
-..
+....
+....
+....
+....
+....
 `
 	column = `
-..
-##
-..
-##
-..
+
+.##.
+
+.##.
+
 `
 	cross = `
-##   ##
- ## ##
-  ###
- ## ##
-##   ##
+.##   ##.
+. ## ## .
+.  ###  .
+. ## ## .
+.##   ##.
 `
 )
 
@@ -112,7 +113,7 @@ func (t text) height() int {
 	return len(t)
 }
 
-func (t text) iterate(f func(x, t int, b bool)) {
+func (t text) iterate(f func(x, y int, b bool)) {
 	for y, line := range t {
 		for x, b := range line {
 			f(x, y, b)
@@ -145,11 +146,11 @@ func stringToTextChar(s string) text {
 			width = l
 		}
 	}
-	for y := 0; y < textCharHeight; y++ {
+	for y := 0; y < len(matrix); y++ {
 		line := lines[y+1]
 		array := make([]bool, width)
 		for x := 0; x < width; x++ {
-			array[x] = x < len(line) && line[x] == '#'
+			array[x] = x < len(line) && line[x] == textPixelRune
 		}
 		matrix[y] = array
 	}
@@ -179,15 +180,11 @@ func concatTexts(t ...text) text {
 		width += c.width()
 	}
 	for y := 0; y < len(ct); y++ {
-		line := make([]bool, width+len(t)-1)
+		line := make([]bool, width)
 		x := 0
-		for i, c := range t {
+		for _, c := range t {
 			for _, b := range c[y] {
 				line[x] = b
-				x++
-			}
-			if i < len(t)-1 {
-				line[x] = false
 				x++
 			}
 		}

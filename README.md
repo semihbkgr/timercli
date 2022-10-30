@@ -1,6 +1,6 @@
 # Timer CLI
 
-Console timer app written in Go
+Console timer app
 
 start countdown:
 

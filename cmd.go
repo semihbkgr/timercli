@@ -14,8 +14,6 @@ var flagParseError = false
 
 var theme = commandLine.String("t", "light", "theme of the renderer on the console")
 
-//todo: stop and proceed operations and manage them by os signals
-//todo: duration format options
 func main() {
 	defer handleError()
 	d, ok := parseDuration()
@@ -102,7 +100,7 @@ func handleError() {
 func formatDuration(d time.Duration) string {
 	m := int(d.Minutes())
 	s := int(d.Seconds()) % 60
-	f := fmt.Sprintf("%02d : %02d", m, s)
+	f := fmt.Sprintf("%02d:%02d", m, s)
 	return f
 }
 

@@ -1,4 +1,4 @@
-module github.com/semihbkgr/timer-cli
+module github.com/semihbkgr/timercli
 
 go 1.18
 
