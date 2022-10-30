@@ -7,6 +7,7 @@ type Timer interface {
 	Elapsed() time.Duration
 	Stop()
 	Proceed()
+	Running() bool
 	Interrupt()
 	Interrupted() bool
 }
@@ -56,7 +57,7 @@ func (c *Countdown) Elapsed() time.Duration {
 }
 
 func (c *Countdown) Stop() {
-	if !c.stopped && !c.interrupted {
+	if c.Running() {
 		c.stoppedAt = time.Now()
 		c.stopped = true
 	}
@@ -67,6 +68,10 @@ func (c *Countdown) Proceed() {
 		c.stoppedDuration += time.Now().Sub(c.stoppedAt)
 		c.stopped = false
 	}
+}
+
+func (c *Countdown) Running() bool {
+	return !c.stopped && !c.interrupted
 }
 
 func (c *Countdown) Interrupt() {
@@ -153,7 +158,7 @@ func (s *Stopwatch) Elapsed() time.Duration {
 }
 
 func (s *Stopwatch) Stop() {
-	if !s.stopped && !s.interrupted {
+	if s.Running() {
 		s.stoppedAt = time.Now()
 		s.stopped = true
 	}
@@ -164,6 +169,10 @@ func (s *Stopwatch) Proceed() {
 		s.stoppedDuration += time.Now().Sub(s.stoppedAt)
 		s.stopped = false
 	}
+}
+
+func (s *Stopwatch) Running() bool {
+	return !s.stopped && !s.interrupted
 }
 
 func (s *Stopwatch) Interrupt() {

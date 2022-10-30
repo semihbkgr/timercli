@@ -12,7 +12,8 @@ import (
 var commandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 var flagParseError = false
 
-var theme = commandLine.String("t", "light", "theme of the renderer on the console")
+var theme = commandLine.String("t", "dark", "theme of the renderer on the console")
+var title = commandLine.String("T", time.Now().Format(time.Kitchen), "title of timer")
 
 func main() {
 	defer handleError()
@@ -35,9 +36,9 @@ func main() {
 	handleSignalInput(termbox.KeyCtrlP, func() {
 		t.Proceed()
 	})
-	r := NewRenderer(*theme)
+	r := NewRenderer(*theme, *title, "ctrl+c -> terminate", "ctrl+s -> stop", "ctrl+p -> proceed")
 	for d := range t.Ticks() {
-		checkErr(r.Render(formatDuration(d)))
+		checkErr(r.Render(formatDuration(d), t.Running()))
 	}
 	if !t.Interrupted() {
 		fmt.Print("\a")

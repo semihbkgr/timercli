@@ -202,52 +202,82 @@ func closeTermbox() {
 }
 
 type Theme struct {
-	bg termbox.Attribute
-	fg termbox.Attribute
+	renderBg  termbox.Attribute
+	renderFg  termbox.Attribute
+	renderFgS termbox.Attribute
+	titleFg   termbox.Attribute
+	infoFg    termbox.Attribute
 }
 
 var themes = map[string]Theme{
-	"light": {
-		bg: termbox.ColorWhite,
-		fg: termbox.ColorBlack,
-	},
 	"dark": {
-		bg: termbox.ColorBlack,
-		fg: termbox.ColorWhite,
+		renderBg:  termbox.ColorBlack,
+		renderFg:  termbox.ColorLightGray,
+		renderFgS: termbox.ColorLightRed,
+		titleFg:   termbox.ColorLightBlue,
+		infoFg:    termbox.ColorLightGreen,
+	},
+	"light": {
+		renderBg:  termbox.ColorLightGray,
+		renderFg:  termbox.ColorBlack,
+		renderFgS: termbox.ColorRed,
+		titleFg:   termbox.ColorBlue,
+		infoFg:    termbox.ColorGreen,
 	},
 }
 
 type Renderer struct {
-	m *sync.Mutex
-	t Theme
+	*sync.Mutex
+	theme Theme
+	title string
+	info  []string
 }
 
-func NewRenderer(theme string) *Renderer {
-	t, ok := themes[theme]
+func NewRenderer(t string, title string, info ...string) *Renderer {
+	theme, ok := themes[t]
 	if !ok {
-		t = themes["light"]
+		theme = themes["dark"]
 	}
 	return &Renderer{
-		m: &sync.Mutex{},
-		t: t,
+		Mutex: &sync.Mutex{},
+		theme: theme,
+		title: title,
+		info:  info,
 	}
 }
 
-func (r *Renderer) Render(s string) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-	err := termbox.Clear(r.t.bg, r.t.bg)
+func (r *Renderer) Render(s string, f bool) error {
+	r.Lock()
+	defer r.Unlock()
+	err := termbox.Clear(r.theme.renderBg, r.theme.renderBg)
 	if err != nil {
 		return err
 	}
 	w, h := termbox.Size()
+	for i := 0; i < len(r.info); i++ {
+		termboxWriteString(r.info[i], 0, h-len(r.info)+i, r.theme.infoFg, r.theme.renderBg)
+	}
+	termboxWriteString(r.title, 0, 0, r.theme.titleFg, r.theme.renderBg)
 	t := convertToText(s)
 	tx := (w - t.width()) / 2
 	ty := (h - t.height()) / 2
 	t.iterate(func(x, y int, b bool) {
 		if b {
-			termbox.SetCell(tx+x, ty+y, ' ', r.t.fg, r.t.fg)
+			if f {
+				termbox.SetCell(tx+x, ty+y, ' ', r.theme.renderFg, r.theme.renderFg)
+			} else {
+				termbox.SetCell(tx+x, ty+y, ' ', r.theme.renderFgS, r.theme.renderFgS)
+			}
+		} else {
+			termbox.SetCell(tx+x, ty+y, ' ', r.theme.renderBg, r.theme.renderBg)
 		}
 	})
+	termbox.SetCursor(w, h)
 	return termbox.Flush()
+}
+
+func termboxWriteString(s string, x, y int, fg, bg termbox.Attribute) {
+	for i := 0; i < len(s); i++ {
+		termbox.SetCell(x+i, y, rune(s[i]), fg, bg)
+	}
 }
