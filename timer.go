@@ -6,6 +6,7 @@ type Timer interface {
 	Ticks() <-chan time.Duration
 	Elapsed() time.Duration
 	Interrupt()
+	Interrupted() bool
 }
 
 const defaultTickRate = 100 * time.Millisecond
@@ -42,6 +43,10 @@ func (c *Countdown) Elapsed() time.Duration {
 
 func (c *Countdown) Interrupt() {
 	c.interrupted = true
+}
+
+func (c *Countdown) Interrupted() bool {
+	return c.interrupted
 }
 
 func startCountdown(c *Countdown) {
@@ -95,16 +100,20 @@ func NewStopwatch() *Stopwatch {
 	return s
 }
 
-func (c *Stopwatch) Ticks() <-chan time.Duration {
-	return c.remaining
+func (s *Stopwatch) Ticks() <-chan time.Duration {
+	return s.remaining
 }
 
-func (c *Stopwatch) Elapsed() time.Duration {
-	return time.Duration(time.Now().UnixNano() - c.startTime.UnixNano())
+func (s *Stopwatch) Elapsed() time.Duration {
+	return time.Duration(time.Now().UnixNano() - s.startTime.UnixNano())
 }
 
-func (c *Stopwatch) Interrupt() {
-	c.interrupted = true
+func (s *Stopwatch) Interrupt() {
+	s.interrupted = true
+}
+
+func (s *Stopwatch) Interrupted() bool {
+	return s.interrupted
 }
 
 func startStopwatch(s *Stopwatch) {

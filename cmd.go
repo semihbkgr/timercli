@@ -34,6 +34,9 @@ func main() {
 		err := r.Render(formatDuration(d))
 		checkErr(err)
 	}
+	if !t.Interrupted() {
+		fmt.Print("\a")
+	}
 }
 
 func commandLineArgs() ([]string, error) {
@@ -98,10 +101,14 @@ func handleError() {
 }
 
 func formatDuration(d time.Duration) string {
-	m := int(d.Minutes())
+	h := int(d.Hours())
+	m := int(d.Minutes()) % 60
 	s := int(d.Seconds()) % 60
-	f := fmt.Sprintf("%02d:%02d", m, s)
-	return f
+	if h == 0 {
+		return fmt.Sprintf("%02d:%02d", m, s)
+	} else {
+		return fmt.Sprintf("%d:%02d:%02d", h, m, s)
+	}
 }
 
 func printElapsedTime(t Timer) {
