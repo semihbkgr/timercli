@@ -206,6 +206,7 @@ type Theme struct {
 	renderFg  termbox.Attribute
 	renderFgS termbox.Attribute
 	titleFg   termbox.Attribute
+	timeFg    termbox.Attribute
 	infoFg    termbox.Attribute
 }
 
@@ -215,6 +216,7 @@ var themes = map[string]Theme{
 		renderFg:  termbox.ColorLightGray,
 		renderFgS: termbox.ColorLightRed,
 		titleFg:   termbox.ColorLightBlue,
+		timeFg:    termbox.ColorLightBlue,
 		infoFg:    termbox.ColorLightGreen,
 	},
 	"light": {
@@ -222,6 +224,7 @@ var themes = map[string]Theme{
 		renderFg:  termbox.ColorBlack,
 		renderFgS: termbox.ColorRed,
 		titleFg:   termbox.ColorBlue,
+		timeFg:    termbox.ColorBlue,
 		infoFg:    termbox.ColorGreen,
 	},
 }
@@ -230,10 +233,11 @@ type Renderer struct {
 	*sync.Mutex
 	theme Theme
 	title string
+	time  []func() string
 	info  []string
 }
 
-func NewRenderer(t string, title string, info ...string) *Renderer {
+func NewRenderer(t string, title string, time []func() string, info []string) *Renderer {
 	theme, ok := themes[t]
 	if !ok {
 		theme = themes["dark"]
@@ -242,6 +246,7 @@ func NewRenderer(t string, title string, info ...string) *Renderer {
 		Mutex: &sync.Mutex{},
 		theme: theme,
 		title: title,
+		time:  time,
 		info:  info,
 	}
 }
@@ -256,6 +261,18 @@ func (r *Renderer) Render(s string, f bool) error {
 	w, h := termbox.Size()
 	for i := 0; i < len(r.info); i++ {
 		termboxWriteString(r.info[i], 0, h-len(r.info)+i, r.theme.infoFg, r.theme.renderBg)
+	}
+	timeStrings := make([]string, len(r.time))
+	timeStringLen := 0
+	for i := 0; i < len(r.time); i++ {
+		timeString := r.time[i]()
+		timeStrings[i] = timeString
+		if len(timeString) > timeStringLen {
+			timeStringLen = len(timeString)
+		}
+	}
+	for i := 0; i < len(timeStrings); i++ {
+		termboxWriteString(timeStrings[i], w-timeStringLen, h-len(timeStrings)+i, r.theme.timeFg, r.theme.renderBg)
 	}
 	termboxWriteString(r.title, 0, 0, r.theme.titleFg, r.theme.renderBg)
 	t := convertToText(s)

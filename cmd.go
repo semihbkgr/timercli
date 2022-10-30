@@ -13,18 +13,18 @@ var commandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 var flagParseError = false
 
 var theme = commandLine.String("t", "dark", "theme of the renderer on the console")
-var title = commandLine.String("T", time.Now().Format(time.Kitchen), "title of timer")
+var title = commandLine.String("T", "", "title of timer")
 
 func main() {
 	defer handleError()
 	d, ok := parseDuration()
-	var t Timer
+	var t *Timer
 	if ok {
 		t = NewCountdown(d)
 	} else {
 		t = NewStopwatch()
 	}
-	defer printElapsedTime(t)
+	defer printOutput(*title, t)
 	initTermbox()
 	defer closeTermbox()
 	handleSignalInput(termbox.KeyCtrlC, func() {
@@ -36,7 +36,14 @@ func main() {
 	handleSignalInput(termbox.KeyCtrlP, func() {
 		t.Proceed()
 	})
-	r := NewRenderer(*theme, *title, "ctrl+c -> terminate", "ctrl+s -> stop", "ctrl+p -> proceed")
+	r := NewRenderer(*theme, *title, []func() string{
+		func() string {
+			return fmt.Sprintf("started at   : %s", t.StartedAt().Format(time.Kitchen))
+		},
+		func() string {
+			return fmt.Sprintf("current time : %s", time.Now().Format(time.Kitchen))
+		},
+	}, []string{"ctrl+c -> terminate", "ctrl+s -> stop", "ctrl+p -> proceed"})
 	for d := range t.Ticks() {
 		checkErr(r.Render(formatDuration(d), t.Running()))
 	}
@@ -117,7 +124,9 @@ func formatDuration(d time.Duration) string {
 	}
 }
 
-func printElapsedTime(t Timer) {
+func printOutput(title string, t *Timer) {
+	fmt.Println(title)
+	fmt.Printf("Started at  : %s\n", t.StartedAt().Format(time.Kitchen))
 	fmt.Printf("Elapsed time: %s\n", formatDuration(t.Elapsed()))
 }
 
