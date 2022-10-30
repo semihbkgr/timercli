@@ -26,13 +26,18 @@ func main() {
 	defer printElapsedTime(t)
 	initTermbox()
 	defer closeTermbox()
-	handleCtrlCInput(func() {
+	handleSignalInput(termbox.KeyCtrlC, func() {
 		t.Interrupt()
+	})
+	handleSignalInput(termbox.KeyCtrlS, func() {
+		t.Stop()
+	})
+	handleSignalInput(termbox.KeyCtrlP, func() {
+		t.Proceed()
 	})
 	r := NewRenderer(*theme)
 	for d := range t.Ticks() {
-		err := r.Render(formatDuration(d))
-		checkErr(err)
+		checkErr(r.Render(formatDuration(d)))
 	}
 	if !t.Interrupted() {
 		fmt.Print("\a")
@@ -115,15 +120,13 @@ func printElapsedTime(t Timer) {
 	fmt.Printf("Elapsed time: %s\n", formatDuration(t.Elapsed()))
 }
 
-func handleCtrlCInput(f func()) {
+func handleSignalInput(signal termbox.Key, f func()) {
 	go func() {
-		termbox.SetInputMode(termbox.InputEsc)
 		for {
 			e := termbox.PollEvent()
 			switch e.Key {
-			case termbox.KeyCtrlC:
+			case signal:
 				f()
-				return
 			}
 		}
 	}()
