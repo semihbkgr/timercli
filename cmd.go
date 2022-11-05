@@ -12,7 +12,7 @@ import (
 var commandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 var flagParseError = false
 
-var theme = commandLine.String("t", "dark", "theme of the renderer on the console")
+var theme = commandLine.String("t", "dark", "theme of the renderer [dark, light]")
 var title = commandLine.String("T", "", "title of timer")
 
 func main() {

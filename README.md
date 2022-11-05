@@ -1,30 +1,33 @@
 # Timer CLI
 
-Console timer app
-
-start countdown:
+Timer console app.
 
 ```shell
-timer [duration]
+go install github.com/semihbkgr/timercli@latest
 ```
 
-start stopwatch:
+Starting timer:
 
 ```shell
-timer
+$ timer #stopwatch
+$ timer [duration] #countdown
 ```
 
-to list available options:
+'duration' arg is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
+
+Listing available args:
 
 ```shell
-timer -h
-```
-```
-Usage of timer:
-  -t string
-    	theme of the renderer on the console (default "light")
+$ timer -h
 ```
 
+- -T : title of timer
+- -t : theme of the renderer [dark, light]
 
+OS signals to control timer
+
+- Ctrl + C : terminate
+- Ctrl + S : stop
+- Ctrl + P : proceed
 
 ![console](./console.png)
